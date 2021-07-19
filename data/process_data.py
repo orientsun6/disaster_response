@@ -17,7 +17,7 @@ def clean_data(df):
     categories.columns = category_colnames
     for column in categories:
         # set each value to be the last character of the string
-        categories[column] = categories[column].str.split('-')[0][1]
+        categories[column] = categories[column].str.split('-').apply(lambda r: r[1])
         # convert column from string to numeric
         categories[column] = categories[column].astype(int)
     df = df.drop('categories', axis=1)
