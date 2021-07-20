@@ -42,6 +42,10 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
 
+    cols = df.iloc[:, 7:]
+    event_means = df.mean()
+    event_names = cols.columns
+
     # create visuals
     graphs = [
         {
@@ -59,6 +63,24 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=event_names,
+                    y=event_means
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Events',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Event type"
                 }
             }
         }

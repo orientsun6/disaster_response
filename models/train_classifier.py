@@ -25,6 +25,9 @@ from sklearn.metrics import classification_report
 url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 def load_data(database_filepath):
+    '''
+    Loading data from database and creating features and labels
+    '''
     engine = create_engine(f'sqlite:///{database_filepath}')
     df = pd.read_sql('SELECT * FROM disaster_respone', engine)
     X = df['message']
@@ -33,6 +36,9 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
+    '''
+    Preprocessing the text data, removing url and perform lemmatization
+    '''
     detected_urls = re.findall(url_regex, text)
     for url in detected_urls:
         text = text.replace(url, "urlplaceholder")
@@ -46,23 +52,31 @@ def tokenize(text):
 
 
 def build_model():
+    '''
+    Building ML pipeline using CountVectorizer,TfidfTransformer,
+    MultiOutputClassifier and DecisionTreeClassifier
+
+    Perform Grid search with 3-fold cross validation
+    '''
+
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
         ('clf', MultiOutputClassifier(DecisionTreeClassifier()))
     ])
     parameters = {
-    'vect__ngram_range': ((1, 1), (1, 2)),
     'vect__max_df': (0.5, 0.75),
     'vect__max_features': (None, 5000),
-    'tfidf__use_idf': (True, False),
     'clf__estimator__max_depth': [2, 5, 10]
     }
 
-    cv = GridSearchCV(pipeline, param_grid=parameters)
+    cv = GridSearchCV(pipeline, param_grid=parameters, cv=3)
     return cv
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    Evaluate accuaracy, recall and f1 score by each category
+    '''
     y_pred = model.predict(X_test)
     for i, category in enumerate(category_names):
         print(category)
@@ -70,6 +84,9 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    '''
+    Save model to pickle format
+    '''
     with open (model_filepath, 'wb') as f:
         pickle.dump(model, f)
 

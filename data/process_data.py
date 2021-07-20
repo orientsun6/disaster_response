@@ -4,16 +4,21 @@ import numpy as np
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    '''
+    Loading data from csv files and merge into one dataset on id
+    '''
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = messages.merge(categories, how='inner', on='id')
     return df
 
 def clean_data(df):
+    '''
+    Clean and preprocess the data
+    '''
     categories = df['categories'].str.split(';', expand=True)
     row = categories.iloc[0, :]
     category_colnames = row.str.split('-', expand=True)[0]
-    print(category_colnames)
     categories.columns = category_colnames
     for column in categories:
         # set each value to be the last character of the string
@@ -22,10 +27,16 @@ def clean_data(df):
         categories[column] = categories[column].astype(int)
     df = df.drop('categories', axis=1)
     df = pd.concat([df, categories], axis=1)
+    # Remove dups
     df = df.drop_duplicates()
+    # Keep only 1 and 0 in related column
+    df = df[df['related'] != 2].copy()
     return df
 
 def save_data(df, database_filename):
+    '''
+    Save data to sqlite database
+    '''
     engine = create_engine(f'sqlite:///{database_filename}')
     df.to_sql('disaster_respone', engine, index=False)
 
